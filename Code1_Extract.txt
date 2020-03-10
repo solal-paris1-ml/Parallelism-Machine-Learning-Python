@@ -1,0 +1,107 @@
+from time import time
+from h5py import File
+from warnings import simplefilter
+from multiprocessing import Pool
+from pandas import DataFrame, Index, concat, read_csv
+from matplotlib.pyplot import figure
+from seaborn import heatmap
+from threading import Thread
+import os
+
+#from sklearn.metrics import accuracy_score
+#from sklearn.metrics import confusion_matrix
+
+### START###
+
+#Check sur puissance de l'odinateur
+
+
+#Definition de l'espace de travail
+os.chdir ("C:\\Users\\ville\\Downloads")
+simplefilter(action='ignore', category=FutureWarning)
+#Import du dossier en h5py
+
+def opti(li) :
+    sam=0
+    for l in li:
+        l = str(l)
+        a = l.split(".")
+        b = int(a[1][0])
+        sam = sam + b
+    if  sam == 0:
+        if abs(max(li)) <= 127:
+            li= li.astype ("int8")
+        elif abs(max(li)) <= 32767:
+            li= li.astype ("int16")
+        else:
+            li= li.astype ("int32")
+    if sam  > 0:
+        if abs(max(li)) <= 32767:
+            li= li.astype ("float16")
+        else :
+            li= li.astype ("float32")
+    return li
+
+
+dtas = [[], [],[],[],[],[],[],[]]
+rest = []
+rest2 = []
+def seg (nb):
+    global dtas
+    cont = File("X_train.h5", "r")["features"][nb*32704:(nb*32704+32704)]
+    conty =read_csv("y_train_2.csv").as_matrix()[:, 1].squeeze()[nb*32704:(nb*32704+32704)]
+    conty = DataFrame(conty)
+    cont = DataFrame(cont)
+    def op1():
+        global rest
+        rest = cont.iloc[:,0:11].apply(opti,axis=0)
+    def op2():
+        global rest2
+        rest2 = cont.iloc[:,11:].astype("float16")
+        mini =rest2.T.min()
+        maxi =rest2.T.max()
+        varr =rest2.T.var()
+        rest2 = concat([mini,maxi,varr], axis=1).reindex(rest2.index)
+        
+    th1 = Thread(target=op1)
+    th2 = Thread(target=op2)
+    
+    th1.start()
+    th2.start()
+    th1.join()
+    th2.join()
+        
+    dt = concat([conty,rest2,rest],axis=1)
+    dtas[nb] = dt
+    dtas = dtas[nb]
+    
+    X_train_cor = dtas.iloc[:,0:11].corr()
+    top_corr_features = X_train_cor.index
+    figure(figsize=(20,20))
+    heatmap(dtas[top_corr_features].corr(), annot=True, cmap='RdYlGn')
+    dtas.hist(bins=50, figsize=(20,15)) #cumulative="TRUE" for CDF
+         
+    return dtas
+     
+
+
+def seg_mp(numbers):
+    start_time = time()
+    p= Pool()
+    result = p.map(seg, numbers)
+    result = concat(result)
+    result=result.set_index([Index(range(261632))])
+    result.to_pickle("C:\\Desktop\\CoursM1_Mosef\\Python\\Code_Final\\xtrain")
+    print(result)
+    p.close()
+    p.join()
+    end_time = time() - start_time
+    print(f"Processing {len(numbers)} numbers took {end_time} time using multiprocessing.")
+
+if __name__=='__main__':
+    nbr = range(8)
+    seg_mp(nbr)
+    
+
+
+ 

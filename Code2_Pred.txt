@@ -1,0 +1,65 @@
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from time import time
+from warnings import simplefilter
+from sklearn import model_selection
+from sklearn.preprocessing import  StandardScaler
+from pickle import Unpickler
+from multiprocessing import Pool
+import os
+import warnings
+from sklearn.exceptions import DataConversionWarning
+
+os.chdir("C:\\Users\\ville\\Downloads")
+with open("C:\\Desktop\\CoursM1_Mosef\\Python\\Code_Final\\xtrain","rb") as fiche :
+    mytestr = Unpickler(fiche)
+    data = mytestr.load()
+
+y_train = data.iloc[:,:1].to_numpy().astype("int8")
+test = data.iloc[:,1:] 
+ 
+
+models = []
+models.append(('LR', LogisticRegression(solver='lbfgs', multi_class='ovr')))
+models.append(('RDF', RandomForestClassifier(n_estimators=10)))
+models.append(('KNN', KNeighborsClassifier()))
+results=[]
+names=[]
+ 
+def predict(mod):
+    start_time = time()
+    global test, y_train , results, names
+#for name,model in models:
+    N = mod[0]
+    M = mod[1]
+    if N == 'KNN' :
+        tests, X_test, y_train, y_test = model_selection.train_test_split(test.to_numpy(), y_train, test_size=0.20, random_state=7)
+        
+    else :
+        sc = StandardScaler()
+        X_train_scaled = sc.fit_transform(test)
+        X_train_scaled =X_train_scaled.astype("float16")
+        tests, X_test, y_train, y_test = model_selection.train_test_split(X_train_scaled, y_train, test_size=0.20, random_state=7)       
+    
+    simplefilter(action='ignore', category=FutureWarning)
+    warnings.filterwarnings(action='ignore', category=DataConversionWarning)
+    kfold=model_selection.KFold(n_splits=10,random_state=7)
+    cv_results= model_selection.cross_val_score(M,tests,y_train,cv=kfold,scoring='accuracy')
+    results.append(cv_results)
+    names.append(N)
+    msg = "%s: %f (%f)" % (N, cv_results.mean(), cv_results.std())
+    print(msg)
+    print("le temps mis est de : ",time()-start_time)     
+
+def predictmp(numbers):
+    start_time = time()
+    p= Pool(3)
+    result = p.map(predict, numbers)
+    p.close()
+    p.join()
+    end_time = time() - start_time
+    print(f"Processing {len(numbers)} numbers took {end_time} time using multiprocessing.") 
+
+if __name__=='__main__':
+    predictmp(models)

@@ -57,3 +57,38 @@ This creation of threads is more eﬃcace than an additional creation of process
 Increasing the number of tasks increases the level of system response to the extent that a task becomes slower and the process can 
 continue to run.
 
+Then comes the choice of model. The synchronous model or the asynchronous model. In the synchronous model there is a dependency between tasks, so you have to wait for the ﬁn completion of a task before moving on to the next one (First-In-First-Out). On the contrary, the asynchronous model allows to pass to another task even if the task eﬀectuéeprécédemmentresteencoursderéalisation.Each machine has its own memory and acts independently.
+
+1.3 Application on Machine Learning algorithms 
+
+In order to be able to eﬀectuer predictions about this challenge, we will use diﬀérents Machine Learning algorithms. Here we place ourselves in a problematic of classiﬁcation, our labels in exit can take the values :
+Labels = 0,1,2
+0 = No oscillation in the following sec. 
+1 = A weak oscillation in the following sec.
+2 = a strong oscillation in the following probe
+
+Algorithms used for Machine Learning applications can be "heavy" and have a large memory footprint. 
+for "standard" computer systems. Even more so when confronted with large data sets, such as the
+case here.
+Our training data is from :
+Xtrain = 261,634 (obervations) for 1261 variables, i.e. 261.634 x 1261. 
+Ytrain = 261.634 (observations) i.e. 261634 x 1
+
+The first 11 variables characterize each of these recordings (sleep stage, amplitude of the oscillation, etc.). 
+current oscillation, duration of the current oscillation etc.) . 
+The next 1250 columns correspond to the 10 sec of EEG recording for each observation (1250 points, i.e. 
+125 columns/sec). Our Xtrain before processing for a 2.4 GB (2,408.14 MB) memory footprint (on import) 
+and 2.13 mo for our Ytrain.
+Moreover, even if these algorithms are relatively simple to implement, the method we will use here to solve our
+problematic will prove to be very time-consuming. The cross validation as well as the split between training data and
+validation (or test) will considerably increase the execution time of our program. Similarly, it is not recommended 
+to train our data on a single model, because if eﬀectivement an algorithm is efficient on a set of data, nothing can be done.
+says it will be on data never before encountered. So we've trained several models and applied to them the 
+called "cross validation".
+
+Here the parallelization will prove to be a determining factor aﬁn to optimize the speed of execution of our code. In eﬀet apply 
+these diﬀérentes procedures on our processors allows us to save a considerable amount of time and reduce the memory footprint of 
+our initial dataset. In the rest of this document we will show the importance of the time/memory saving realized by using
+these methods of multiprocessing and multhreading.
+
+
